@@ -26,12 +26,14 @@ This program uses a small libreadline wrapper implemented in lreadline.c.
 In Debian or Ubuntu the package "libreadline-dev" must be installed.
 
 The file "Makefile" can be used to build and install "clc" into "/usr/local/bin"
-$ make clean
-$ make
-$ sudo make install
+
+	$ make clean
+	$ make
+	$ sudo make install
 
 Alternatively just build the wrapper with gcc:
-$ gcc -fPIC -shared -lreadline -llua -o lreadline.so lreadline.c
+
+	$ gcc -fPIC -shared -lreadline -llua -o lreadline.so lreadline.c
 
 --------------------------------------------------------------------------------
 
@@ -52,7 +54,7 @@ Enter a simple expression:
 	> 1 * 4 * 9
 	36
 
-The result is stored in a global variable `_`.
+The result is stored in a global variable `_` (the underscore).
 For example, entering any expression:
 
 	> 344 + 1
