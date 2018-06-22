@@ -1,8 +1,7 @@
-/*
-===============================================================================
+/**
 clc - Command Line Calculator
 
-Copyright (C) 2016  Kari Sigurjonsson
+Copyright (C) 2016-2018  Kari Sigurjonsson
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,58 +15,50 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-===============================================================================
 */
-/**
-@defgroup lreadline Minimal Lua wrapper for GNU libreadline.
-@{
-*/
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <lua.h>
-#include <lualib.h>
 #include <lauxlib.h>
+#include <lualib.h>
 
-int l_readline(lua_State *L) {
-	const char *prompt = NULL;
+/*************************************************************************************************/
 
-	if (lua_isstring(L, 1)) {
-		prompt = lua_tostring(L, 1);
+static int Lua_readline(lua_State *L) {
+	char *prompt = "";
+	char * zline = readline(prompt);
+
+	if (zline != NULL && zline[0] != '\0') {
+		lua_pushstring(L, zline);
 	} else {
-		prompt = ">";
+		lua_pushstring(L, "");
 	}
 
-	char *pz = readline(prompt);
-	if (pz != NULL) {
-		lua_pushstring(L, pz);
-		return 1;
-	}
-	return 0;
-}
-
-int l_addhistory(lua_State *L) {
-	if (lua_isstring(L, 1)) {
-		add_history(lua_tostring(L, 1));
-	}
-	return 0;
-}
-
-
-static const struct luaL_Reg lreadline[] = {
-	{"readline",   l_readline},
-	{"addhistory", l_addhistory},
-	//--
-	{NULL, NULL}  /* sentinel */
-};
-
-int luaopen_lreadline(lua_State *L) {
-	lua_newtable(L);
-	luaL_setfuncs(L, lreadline, 0);
 	return 1;
 }
 
-/** @} */
+static int Lua_tohistory(lua_State *L) {
+	if (lua_type(L, 1) != LUA_TSTRING) {
+		return 0;
+	}
+
+	const char *zstr = lua_tostring(L, 1);
+	add_history(zstr);
+	return 0;
+}
+
+static const struct luaL_Reg lreadline[] = {
+	{ "readline", Lua_readline },
+	{ "tohistory", Lua_tohistory},
+	//--
+	{ NULL, NULL }
+};
+
+
+int luaopen_lreadline(lua_State *L) {
+	luaL_newlib(L, lreadline);
+	return 1;
+}
 
