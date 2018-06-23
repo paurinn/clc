@@ -27,7 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /*************************************************************************************************/
 
 static int Lua_readline(lua_State *L) {
-	char *prompt = "";
+	const char *prompt = "";
+
+	if (lua_type(L, 1)) {
+		prompt = lua_tostring(L, 1);
+	}
+
 	char * zline = readline(prompt);
 
 	if (zline != NULL && zline[0] != '\0') {

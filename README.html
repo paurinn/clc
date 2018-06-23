@@ -1,0 +1,593 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+</head>
+<body>
+<h1 id="clc-v0.8">clc v0.8</h1>
+<pre><code>============================================================================
+clc - Command Line Calculator
+
+Copyright (C) 2016-2018  Kari Sigurjonsson
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+
+============================================================================</code></pre>
+<h2 id="introduction">Introduction</h2>
+<p>This program is a basic FORTH kernel implementing the following words:</p>
+<table>
+<colgroup>
+<col width="16%" />
+<col width="29%" />
+<col width="54%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Mnemonic</th>
+<th align="left">Stack Effect</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">( - )</td>
+<td align="left">Floating point mode (default).</td>
+</tr>
+<tr class="even">
+<td align="left">decimal</td>
+<td align="left">( - )</td>
+<td align="left">Decimal mode.</td>
+</tr>
+<tr class="odd">
+<td align="left">hex</td>
+<td align="left">( - )</td>
+<td align="left">Hexadecimal mode.</td>
+</tr>
+<tr class="even">
+<td align="left">.</td>
+<td align="left">( - )</td>
+<td align="left">Pop stack and print.</td>
+</tr>
+<tr class="odd">
+<td align="left">emit</td>
+<td align="left">( - )</td>
+<td align="left">Emit ASCII character.</td>
+</tr>
+<tr class="even">
+<td align="left">space</td>
+<td align="left">( - )</td>
+<td align="left">Emip ASCII space.</td>
+</tr>
+<tr class="odd">
+<td align="left">spaces</td>
+<td align="left">( - )</td>
+<td align="left">Emit multip ASCII spaces.</td>
+</tr>
+<tr class="even">
+<td align="left">cr</td>
+<td align="left">( - )</td>
+<td align="left">Emit ASCII line feed.</td>
+</tr>
+<tr class="odd">
+<td align="left">.&quot;</td>
+<td align="left">( - )</td>
+<td align="left">Begin string message to be printed.</td>
+</tr>
+<tr class="even">
+<td align="left">&quot;</td>
+<td align="left">( - )</td>
+<td align="left">End string message and print it.</td>
+</tr>
+<tr class="odd">
+<td align="left">+</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, calculates n1 + n2, pushes result.</td>
+</tr>
+<tr class="even">
+<td align="left">-</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, calculates n1 - n2, pushes result.</td>
+</tr>
+<tr class="odd">
+<td align="left">*</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, calculates n1 * n2, pushes result.</td>
+</tr>
+<tr class="even">
+<td align="left">/</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, calculates n1 / n2, pushes result.</td>
+</tr>
+<tr class="odd">
+<td align="left">%</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, calculates n1 % n2, pushes result.</td>
+</tr>
+<tr class="even">
+<td align="left">1+</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops one value, calculates n1 + 1, pushes result.</td>
+</tr>
+<tr class="odd">
+<td align="left">1-</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops one value, calculates n1 - 1, pushes result.</td>
+</tr>
+<tr class="even">
+<td align="left">2+</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops one value, calculates n1 + 2, pushes result.</td>
+</tr>
+<tr class="odd">
+<td align="left">2-</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops one value, calculates n1 - 2, pushes result.</td>
+</tr>
+<tr class="even">
+<td align="left">2*</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops one value, calculates n1 * 2, pushes result.</td>
+</tr>
+<tr class="odd">
+<td align="left">2/</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops one value, calculates n1 / 2, pushes result.</td>
+</tr>
+<tr class="even">
+<td align="left">*/</td>
+<td align="left">(n1 n2 n3 - n)</td>
+<td align="left">Pops three values, calculates (n1 * n2) / n3, pushes result.</td>
+</tr>
+<tr class="odd">
+<td align="left">/%</td>
+<td align="left">(n1 n2 - n n)</td>
+<td align="left">Pops two values, calculates (n1 / n2) and (n1 % 2), pushes quotient and remainder.</td>
+</tr>
+<tr class="even">
+<td align="left">*/%</td>
+<td align="left">(n1 n2 n3 - n n)</td>
+<td align="left">Pops three values, calculates ((n1 * n2) / n3) and ((n1 * n2) % n3). Pushes quotient and remainder.</td>
+</tr>
+<tr class="odd">
+<td align="left">tau</td>
+<td align="left">( - n)</td>
+<td align="left">Pushes the value of Tau (2 * PI).</td>
+</tr>
+<tr class="even">
+<td align="left">pi</td>
+<td align="left">( - n)</td>
+<td align="left">Pushes the value of Pi (Tau / 2).</td>
+</tr>
+<tr class="odd">
+<td align="left">min</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, calculates the minimum vaule and pushes it.</td>
+</tr>
+<tr class="even">
+<td align="left">max</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, calculates the minimum vaule and pushes it.</td>
+</tr>
+<tr class="odd">
+<td align="left">abs</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops value, pushes its absolute value.</td>
+</tr>
+<tr class="even">
+<td align="left">neg</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops value, pushes its negated value.</td>
+</tr>
+<tr class="odd">
+<td align="left">sqrt</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops value, pushes the square root of it.</td>
+</tr>
+<tr class="even">
+<td align="left">sin</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops value, pushes sin(n1).</td>
+</tr>
+<tr class="odd">
+<td align="left">cos</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops value, pushes cos(n1).</td>
+</tr>
+<tr class="even">
+<td align="left">tan</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops value, pushes tan(n1).</td>
+</tr>
+<tr class="odd">
+<td align="left">atan</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops value, pushes atan(n1).</td>
+</tr>
+<tr class="even">
+<td align="left">atan2</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, pushes atan2(n1, n2).</td>
+</tr>
+<tr class="odd">
+<td align="left">pow</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, pushes n1 to the power of n2.</td>
+</tr>
+<tr class="even">
+<td align="left">~</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops value, pushes its bitwise negation (all bits flipped).</td>
+</tr>
+<tr class="odd">
+<td align="left">|</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops two values, pushes the bitwise OR of the values.</td>
+</tr>
+<tr class="even">
+<td align="left">&amp;</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, pushes the bitwise AND of the values.</td>
+</tr>
+<tr class="odd">
+<td align="left">^</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, pushes the bitwise exlusive OR of the values.</td>
+</tr>
+<tr class="even">
+<td align="left">1&gt;&gt;</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops one value, pushes the bitwise right shift of the value.</td>
+</tr>
+<tr class="odd">
+<td align="left">1&lt;&lt;</td>
+<td align="left">(n1 - n)</td>
+<td align="left">Pops one value, pushes the bitwise left shift of the value.</td>
+</tr>
+<tr class="even">
+<td align="left">&gt;&gt;</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, pushes the bitwise right shift i.e. (n1 &gt;&gt; n2).</td>
+</tr>
+<tr class="odd">
+<td align="left">&lt;&lt;</td>
+<td align="left">(n1 n2 - n)</td>
+<td align="left">Pops two values, pushes the bitwise left shift i.e. (n1 &gt;&gt; n2).</td>
+</tr>
+<tr class="even">
+<td align="left">if</td>
+<td align="left">(f - )</td>
+<td align="left">Pops one value, continues if flag is non-zero.</td>
+</tr>
+<tr class="odd">
+<td align="left">else</td>
+<td align="left">( - )</td>
+<td align="left">The route taken on IF if the flag is zero.</td>
+</tr>
+<tr class="even">
+<td align="left">then</td>
+<td align="left">( - )</td>
+<td align="left">The route taken on IF in either case.</td>
+</tr>
+<tr class="odd">
+<td align="left">0=</td>
+<td align="left">(n1 - f)</td>
+<td align="left">Pops one value, pushes -1 if value is zero, else pushes 0.</td>
+</tr>
+<tr class="even">
+<td align="left">0&gt;</td>
+<td align="left">(n1 - f)</td>
+<td align="left">Pops one value, pushes -1 if value is above zero, else pushes 0.</td>
+</tr>
+<tr class="odd">
+<td align="left">0&lt;</td>
+<td align="left">(n1 - f)</td>
+<td align="left">Pops one value, pushes -1 if value is below zero, else pushes 0.</td>
+</tr>
+<tr class="even">
+<td align="left">=</td>
+<td align="left">(n1 n2 - f)</td>
+<td align="left">Pops two values, pushes -1 if n1 equals n2, else pushes 0.</td>
+</tr>
+<tr class="odd">
+<td align="left">&gt;</td>
+<td align="left">(n1 n2 - f)</td>
+<td align="left">Pops two values, pushes -1 if n1 is smaller than n2.</td>
+</tr>
+<tr class="even">
+<td align="left">&lt;</td>
+<td align="left">(n1 n2 - f)</td>
+<td align="left">Pops two values, pushes -1 if n1 is larger than n2.</td>
+</tr>
+<tr class="odd">
+<td align="left">&gt;=</td>
+<td align="left">(n1 n2 - f)</td>
+<td align="left">Pops two values, pushes -1 if n1 is larger than or equal to n2.</td>
+</tr>
+<tr class="even">
+<td align="left">&lt;=</td>
+<td align="left">(n1 n2 - f)</td>
+<td align="left">Pops two values, pushes -1 if n1 is larger than or equal to n2.</td>
+</tr>
+<tr class="odd">
+<td align="left">not</td>
+<td align="left">(f1 - f)</td>
+<td align="left">Pops a flag, pushes its negated value i.e. 0 becomes -1 and any other value becomes 0.</td>
+</tr>
+<tr class="even">
+<td align="left">and</td>
+<td align="left">(f1 f2 - f)</td>
+<td align="left">Pops two flags, pushes -1 if both f1 and f2 are TRUE, else pushes 0.</td>
+</tr>
+<tr class="odd">
+<td align="left">or</td>
+<td align="left">(f1 f2 - f)</td>
+<td align="left">Pops two flags, pushes -1 if either f1 and f2 is TRUE, else pushes 0.</td>
+</tr>
+<tr class="even">
+<td align="left">xor</td>
+<td align="left">(f1 f2 - f)</td>
+<td align="left">Pops two flags, pushes -1 if either f1 and f2 are TRUE but not both, else pushes 0.</td>
+</tr>
+<tr class="odd">
+<td align="left">drop</td>
+<td align="left">(n - )</td>
+<td align="left">Pops the stack.</td>
+</tr>
+<tr class="even">
+<td align="left">dup</td>
+<td align="left">(n1 - n1 n1)</td>
+<td align="left">Duplicates top of stack.</td>
+</tr>
+<tr class="odd">
+<td align="left">over</td>
+<td align="left">(n1 n2 - n1 n2 n1)</td>
+<td align="left">Duplicates 2nd stack item from the top.</td>
+</tr>
+<tr class="even">
+<td align="left">swap</td>
+<td align="left">(n1 n2 - n2 n1)</td>
+<td align="left">Swap top two stack elements.</td>
+</tr>
+<tr class="odd">
+<td align="left">rot</td>
+<td align="left">(n1 n2 n3 - n2 n3 n1)</td>
+<td align="left">Rotates third stack item to the top.</td>
+</tr>
+<tr class="even">
+<td align="left">2drop</td>
+<td align="left">(n1 n2 - )</td>
+<td align="left">Pop stack twice.</td>
+</tr>
+<tr class="odd">
+<td align="left">2dup</td>
+<td align="left">(d1 - d1 d1)</td>
+<td align="left">Duplicate the two top-most stack items.</td>
+</tr>
+<tr class="even">
+<td align="left">2over</td>
+<td align="left">(d1 d2 - d1 d2 d1)</td>
+<td align="left">Duplicates second pair from the top.</td>
+</tr>
+<tr class="odd">
+<td align="left">2swap</td>
+<td align="left">(d1 d2 - d2 d1)</td>
+<td align="left">Swap the two top-most pairs on stack.</td>
+</tr>
+<tr class="even">
+<td align="left">var</td>
+<td align="left">( - )</td>
+<td align="left">Declare variable.</td>
+</tr>
+<tr class="odd">
+<td align="left">!</td>
+<td align="left">( - )</td>
+<td align="left">Store variable.</td>
+</tr>
+<tr class="even">
+<td align="left">:</td>
+<td align="left">( - )</td>
+<td align="left">Begin word compilation.</td>
+</tr>
+<tr class="odd">
+<td align="left">`</td>
+<td align="left">( - )</td>
+<td align="left">Begin Lua compilation.</td>
+</tr>
+<tr class="even">
+<td align="left">;</td>
+<td align="left">( - )</td>
+<td align="left">End compilation.</td>
+</tr>
+<tr class="odd">
+<td align="left">see</td>
+<td align="left">( - )</td>
+<td align="left">Print definition of word.</td>
+</tr>
+<tr class="even">
+<td align="left">list</td>
+<td align="left">( - )</td>
+<td align="left">Print contents of dictionary.</td>
+</tr>
+<tr class="odd">
+<td align="left">forget</td>
+<td align="left">( - )</td>
+<td align="left">Remove word from dictionary.</td>
+</tr>
+<tr class="even">
+<td align="left">writestate</td>
+<td align="left">( - )</td>
+<td align="left">Write dictionary to file state.clc.</td>
+</tr>
+<tr class="odd">
+<td align="left">readstate</td>
+<td align="left">( - )</td>
+<td align="left">Read dictionary from file state.clc.</td>
+</tr>
+<tr class="even">
+<td align="left">(</td>
+<td align="left">( - )</td>
+<td align="left">Start a comment block of all following words until ')'.</td>
+</tr>
+<tr class="odd">
+<td align="left">)</td>
+<td align="left">( - )</td>
+<td align="left">Ends a comment block.</td>
+</tr>
+<tr class="even">
+<td align="left">page</td>
+<td align="left">( - )</td>
+<td align="left">Clear screen.</td>
+</tr>
+<tr class="odd">
+<td align="left">?stack</td>
+<td align="left">( - f)</td>
+<td align="left">Pushes -1 if stack is empty, else pushes 0.</td>
+</tr>
+<tr class="even">
+<td align="left">stack</td>
+<td align="left">( - )</td>
+<td align="left">Print stack contents.</td>
+</tr>
+<tr class="odd">
+<td align="left">reset</td>
+<td align="left">(XXX)</td>
+<td align="left">Stack is emptied.</td>
+</tr>
+<tr class="even">
+<td align="left">exec</td>
+<td align="left">( - )</td>
+<td align="left">Execute file.</td>
+</tr>
+<tr class="odd">
+<td align="left">exit</td>
+<td align="left">( - )</td>
+<td align="left">Quit program.</td>
+</tr>
+<tr class="even">
+<td align="left">quit</td>
+<td align="left">( - )</td>
+<td align="left">Quit program.</td>
+</tr>
+<tr class="odd">
+<td align="left">bye</td>
+<td align="left">( - )</td>
+<td align="left">Quit program.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="calculator-mode">Calculator mode</h2>
+<p>When the program starts a boiler plate message is displayed and the user may then enter his words.</p>
+<p>Words in FORTH represent operators, subroutines and variables.</p>
+<p>Enter some numbers and then an operator and press ENTER:</p>
+<pre><code>&gt; 1 3 +</code></pre>
+<p>The result will be printed as:</p>
+<pre><code> 4 ok</code></pre>
+<p>The stack can be printed with <em>stack</em>.</p>
+<pre><code>&gt; stack
+------------
+ 4
+------------</code></pre>
+<p>Basic functions are supported such as square root, sine, cosine, arc tangens and atan2:</p>
+<pre><code>&gt; sqrt
+ 2 ok</code></pre>
+<p>Type <em>help</em> to list default word list.</p>
+<h2 id="compile-mode">Compile mode</h2>
+<p>The word ':' initiates compile mode. All words following until ';' are collected into subroutine identified by the given word.</p>
+<p>For example, define a function to compute ((a*a) + ab + c). Stack effect (a b c - n):</p>
+<pre><code>&gt; : solve rot dup dup * rot * + + ;</code></pre>
+<p>Test it out:</p>
+<pre><code>&gt; 2 3 5 solve
+ 15 ok</code></pre>
+<p>Define Pythagoras (with comment):</p>
+<pre><code>&gt; : pygo ( a b - c ) dup * swap dup * + sqrt ;
+
+&gt; 2 3 pygo
+ 3.60555 ok</code></pre>
+<p>Conversion:</p>
+<pre><code>&gt; : KB 1024 * ;
+&gt; : MB KB 1024 * ;
+
+&gt; 2 KB
+ 2048 ok
+
+&gt; 27 KB 128 MB +
+ 1.34245e+08 ok</code></pre>
+<p>To print the definition of a word use <em>see</em>:</p>
+<pre><code>&gt; see pygo
+  ( a b - c ) dup * swap dup * + sqrt
+ ok</code></pre>
+<p>To list the current dictionary use <em>list</em>:</p>
+<pre><code>&gt; list
+: KB  1024 * ;
+: MB  KB 1024 * ;
+: pygo  ( a b - n ) dup * swap dup * + sqrt ;
+: solve rot dup dup * rot * + + ;
+ ok</code></pre>
+<h2 id="lua-compile-mode">Lua compile mode</h2>
+<p>Straight Lua code can be compiled using '`', the back tick.</p>
+<pre><code>&gt; ` ls os.execute(&#39;ls&#39;) ;</code></pre>
+<p>Any Lua code is accepted but must not contain any ';' semicolon. This is acceptable as Lua never needs semicolons.</p>
+<pre><code>&gt; ` time io.write(os.date(&quot;%Y-%m-%d&quot;)) print(os.date(&quot; %H:%M:%S&quot;)) ;
+
+&gt; time
+2018-06-23 18:44:33
+ ok
+
+&gt; ls
+clc.lua  LICENSE  lreadline.c  lreadline.so  Makefile  README.html  README.md  state.clc
+ ok</code></pre>
+<p>The stack is accessible in Lua through <code>_stack:push()</code> and <code>_stack:pop()</code>.</p>
+<pre><code>&gt; ` clock _stack:push(os.clock()) ;
+ ok
+
+&gt; clock
+ ok
+
+&gt; stack
+------------
+ 0.01037
+------------
+ ok</code></pre>
+<h2 id="state">State</h2>
+<p>The current state i.e. compiled words and variables can be backed up and restored.</p>
+<p>To write current state to disk use the word <em>writestate</em>.</p>
+<p>The state file is named <em>state.clc</em>.</p>
+<p>Load it back with <em>readstate</em>.</p>
+<p>On startup the program will try to load the file if it exists.</p>
+<p>On exit the program will call <em>writestate</em> automatically.</p>
+<h2 id="external-programs">External programs</h2>
+<p>To run external file use the word <em>exec</em>.</p>
+<p>The file name must not contain spaces.</p>
+<pre><code>&gt; exec somefile.clc
+ ok
+ ok
+ ok
+ ok</code></pre>
+<p>Each successful line in the file prints &quot;ok&quot;.</p>
+<h2 id="readline-wrapper">Readline Wrapper</h2>
+<p>This program uses a small libreadline wrapper implemented in lreadline.c. In Debian or Ubuntu the package &quot;libreadline-dev&quot; must be installed.</p>
+<p>The file &quot;Makefile&quot; builds the Lua wrapper in lreadline.c.</p>
+<pre><code>$ make clean
+$ make</code></pre>
+<p>Optionally install the library globally:</p>
+<pre><code>$ sudo make install</code></pre>
+<p>Alternatively just build the wrapper with gcc:</p>
+<pre><code>$ gcc -fPIC -shared -lreadline -llua -o lreadline.so lreadline.c</code></pre>
+</body>
+</html>

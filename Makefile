@@ -19,6 +19,8 @@
 #
 ###################################################################################################
 
+DOCIN = README.md
+DOCOUT = README.html
 OUT = lreadline.so
 IN = lreadline.c
 INSTALLDIR = /usr/local/lib/lua/5.3/
@@ -26,13 +28,16 @@ INSTALLDIR = /usr/local/lib/lua/5.3/
 CFLAGS = -fPIC -shared -I/usr/include/lua5.3 -g -ggdb
 LIBS = -llua5.3 -lreadline
 
-.PHONY:install
+.PHONY:install clean doc
 
-OUT: $(IN)
+OUT: $(IN) $(DOCIN)
 	gcc $(CFLAGS) -o $(OUT) $(IN) $(LIBS)
 
 clean:
 	rm -f $(OUT)
+
+doc: $(DOCIN)
+	pandoc -s -o $(DOCOUT) $(DOCIN)
 
 install: $(OUT)
 	cp $(OUT) $(INSTALLDIR)
